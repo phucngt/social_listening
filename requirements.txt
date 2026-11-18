@@ -1,0 +1,5 @@
+PyYAML>=6.0
+# Chỉ cần khi bật collector Facebook/Zalo:
+# playwright>=1.40
+# Chạy test:
+# pytest>=7

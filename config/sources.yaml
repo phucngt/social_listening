@@ -1,0 +1,35 @@
+# Danh sách nguồn theo dõi. enabled: false = bỏ qua, không tính là nguồn được cấu hình.
+# max_age_days: nội dung đăng cũ hơn số ngày này chỉ được đánh dấu "đã thấy", không gửi AI
+# (tránh lần chạy đầu kéo về hàng trăm bài cũ). Có thể ghi đè trong từng nguồn.
+max_age_days: 7
+
+sources:
+  - id: google_news_ysvn
+    type: google_news
+    enabled: true
+    group_name: "Google News"
+    queries:
+      - '"Yuanta Việt Nam"'
+      - '"Chứng khoán Yuanta"'
+      - 'YSVN chứng khoán'
+      - 'YSflex'
+
+  # Nhập tay: copy bài từ nhóm FB/Zalo vào inbox/*.jsonl (xem inbox/README.md)
+  - id: manual_inbox
+    type: manual
+    enabled: true
+    path: inbox
+
+  # Chưa bật — chờ DM cung cấp danh sách nhóm và tài khoản công ty được duyệt.
+  - id: fb_group_example
+    type: facebook
+    enabled: false
+    group_name: "TODO: tên nhóm"
+    url: "TODO: https://www.facebook.com/groups/<id>"
+    storage_state_env: FB_STORAGE_STATE   # đường dẫn file phiên đăng nhập, đặt qua biến môi trường
+
+  - id: zalo_group_example
+    type: zalo
+    enabled: false
+    group_name: "TODO: tên nhóm"
+    storage_state_env: ZALO_STORAGE_STATE

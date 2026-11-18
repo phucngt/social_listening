@@ -1,0 +1,32 @@
+# So khớp không phân biệt hoa thường và có/không dấu.
+# Nhóm "ysvn" và "risk" quyết định topic gợi ý cho bước phân tích.
+ysvn:
+  - yuanta
+  - ysvn
+  - ysflex
+  - ysfuture
+  - yssaving
+  - yswealth
+  - ysradar
+competitor:
+  # TODO: bổ sung/điều chỉnh theo danh sách đối thủ thực tế
+  - ssi
+  - vndirect
+  - vps
+  - hsc
+  - mirae asset
+  - tcbs
+  - kis
+  - mbs
+risk:
+  - lừa đảo
+  - mất tiền
+  - khiếu nại
+  - treo app
+  - không đăng nhập được
+  - lỗi lệnh
+  - chậm rút tiền
+  - không rút được
+  - bị khóa tài khoản
+  - giả mạo
+  - phốt

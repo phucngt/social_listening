@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+# Phiên đăng nhập / bí mật — KHÔNG BAO GIỜ commit
+secrets/
+*.storage_state.json
+.env
