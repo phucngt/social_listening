@@ -1,0 +1,4 @@
+# File JSONL chỉ ghi thêm: nếu hai lần chạy rẽ nhánh thì giữ dòng của cả hai bên, không conflict
+data/seen.jsonl merge=union
+data/items.jsonl merge=union
+data/alerts.jsonl merge=union

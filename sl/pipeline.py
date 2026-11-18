@@ -68,7 +68,10 @@ def collect(sources_path: Path = ROOT / "config/sources.yaml",
         return run
 
     seen = {r["key"] for r in read_jsonl(SEEN)}
-    pending_keys = {r["key"] for r in read_jsonl(PENDING)}
+    done = {r["key"] for r in read_jsonl(ITEMS)}
+    pending_rows = [r for r in read_jsonl(PENDING) if r["key"] not in done]
+    write_jsonl(PENDING, pending_rows)  # bỏ dòng đã phân tích (có thể bị phục hồi khi merge branch)
+    pending_keys = {r["key"] for r in pending_rows}
     collected, new_seen, new_pending, dup, too_old = 0, [], [], 0, 0
     default_age = cfg.get("max_age_days")
 

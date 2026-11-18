@@ -2,6 +2,8 @@
 
 Python lo thu thập, lọc trùng và lọc từ khóa; Claude **chỉ** phân tích các dòng trong `data/pending.jsonl`.
 
+0. `bash scripts/sync_state.sh` — **bắt buộc**, lấy `data/` và `runs/` từ branch `claude/*` có commit mới nhất
+   (mỗi lần chạy có thể được cấp branch khác nhau). Lỗi bước này → báo FAILED, không chạy tiếp.
 1. `pip install -r requirements.txt`
 2. `python -m sl collect` → ghi lại `run_id` in ra.
    - Mỗi nguồn lỗi được ghi vào `runs/<run_id>.json`, không làm dừng cả lần chạy.
@@ -21,5 +23,5 @@ Python lo thu thập, lọc trùng và lọc từ khóa; Claude **chỉ** phân 
 5. `python -m sl report <run_id>` → Audit Log tiếng Việt, lưu tại `runs/<run_id>.md`.
 6. Nếu có cảnh báo High/Critical (`data/alerts.jsonl`, `delivered: false`) hoặc trạng thái FAILED/PARTIAL:
    gửi PushNotification. POC chưa có kênh notification riêng → không được ghi là "đã gửi thành công".
-7. Commit `data/`, `runs/` lên branch làm việc và push — đây là cách lưu lịch sử giữa các lần chạy
-   (container của routine bị xoá sau mỗi lần chạy).
+7. Commit `data/`, `runs/` và push lên **branch được cấp cho lần chạy này**. Lần chạy sau sẽ tự lấy lại
+   qua bước 0. Push thất bại → báo PARTIAL và gửi notification (lịch sử lọc trùng không được lưu).
