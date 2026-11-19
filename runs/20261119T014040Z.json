@@ -1,0 +1,52 @@
+{
+  "run_id": "20261119T014040Z",
+  "started_at": "2026-11-19T01:40:40+00:00",
+  "sources": [
+    {
+      "id": "google_news_ysvn",
+      "type": "google_news",
+      "enabled": true,
+      "status": "ok",
+      "collected": 81,
+      "new": 0
+    },
+    {
+      "id": "manual_inbox",
+      "type": "manual",
+      "enabled": true,
+      "status": "ok",
+      "collected": 0,
+      "new": 0
+    },
+    {
+      "id": "fb_group_example",
+      "type": "facebook",
+      "enabled": false,
+      "status": "skipped",
+      "collected": 0,
+      "new": 0
+    },
+    {
+      "id": "zalo_group_example",
+      "type": "zalo",
+      "enabled": false,
+      "status": "skipped",
+      "collected": 0,
+      "new": 0
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "sources_configured": 2,
+    "sources_ok": 2,
+    "sources_partial": 0,
+    "sources_failed": 0,
+    "collected": 81,
+    "new": 0,
+    "duplicate": 81,
+    "too_old": 0,
+    "relevant_new": 0,
+    "pending_total": 0
+  },
+  "finished_collect_at": "2026-11-19T01:40:42+00:00"
+}
