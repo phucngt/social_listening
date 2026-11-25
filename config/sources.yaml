@@ -23,10 +23,9 @@ sources:
   # Chưa bật — chờ DM cung cấp danh sách nhóm và tài khoản công ty được duyệt.
   # YouTube: RSS theo kênh (không cần key) + YouTube Data API (tìm theo từ khóa, lấy lượt xem).
   # API key lấy từ GitHub Secret YOUTUBE_API_KEY — chỉ có khi chạy trong GitHub Actions.
-  # Bật (enabled: true) sau khi đã tạo secret.
   - id: youtube
     type: youtube
-    enabled: false
+    enabled: true
     api_key_env: YOUTUBE_API_KEY
     channels: []            # channel_id các kênh chứng khoán theo dõi cố định (dạng UCxxxx), đọc qua RSS
     lookback_hours: 48      # chỉ tìm video đăng trong khoảng này
