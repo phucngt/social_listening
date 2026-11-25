@@ -47,6 +47,20 @@ def _item(vid: str, title: str, desc: str, channel: str, published: str | None, 
                    author=channel, source_id=source_id, metrics=metrics)
 
 
+def _comment_item(c: dict, video: RawItem, source_id: str) -> RawItem | None:
+    text = (c.get("textOriginal") or c.get("textDisplay") or "").strip()
+    if not text or not c.get("id"):
+        return None
+    title = video.content.split("\n", 1)[0]
+    vid = video.content_id
+    return RawItem(source="youtube_comment",
+                   group_name=f"YouTube — {video.author} — bình luận video: {title[:80]}",
+                   content=text, content_id=f"comment:{c['id']}", published_at=c.get("publishedAt"),
+                   original_url=f"https://www.youtube.com/watch?v={vid}&lc={c['id']}",
+                   author=c.get("authorDisplayName"), source_id=source_id,
+                   metrics={"likes": int(c["likeCount"])} if str(c.get("likeCount", "")).isdigit() else None)
+
+
 def parse_channel_rss(xml_bytes: bytes, source_id: str) -> list[RawItem]:
     root = ET.fromstring(xml_bytes)
     channel = (root.findtext("a:title", default="", namespaces=NS) or "").strip() or "?"
@@ -94,6 +108,23 @@ class YouTubeAPI:
                       relevanceLanguage="vi", publishedAfter=published_after, maxResults=max_results)
         return [x["id"]["videoId"] for x in d.get("items", []) if x.get("id", {}).get("videoId")]
 
+    def comments(self, vid: str, max_results: int = 100) -> list[dict]:
+        """100 bình luận mới nhất (kèm vài phản hồi đầu) = 1 lần gọi = 1 đơn vị hạn mức."""
+        try:
+            d = self.call("commentThreads", 1, part="snippet,replies", videoId=vid, order="time",
+                          maxResults=max_results, textFormat="plainText")
+        except ApiError as e:
+            if "commentsDisabled" in str(e):
+                return []  # video tắt bình luận: không phải lỗi
+            raise
+        out = []
+        for t in d.get("items", []):
+            top = t.get("snippet", {}).get("topLevelComment", {})
+            out.append({"id": top.get("id") or t.get("id"), **top.get("snippet", {})})
+            for r in t.get("replies", {}).get("comments", []):
+                out.append({"id": r.get("id"), **r.get("snippet", {})})
+        return out
+
     def videos(self, ids: list[str]) -> dict[str, dict]:
         out = {}
         for i in range(0, len(ids), 50):
@@ -118,6 +149,46 @@ def _save_state(state: dict) -> None:
 def _metrics(stats: dict) -> dict:
     return {k: int(stats[s]) for k, s in (("views", "viewCount"), ("likes", "likeCount"),
                                           ("comments", "commentCount")) if str(stats.get(s, "")).isdigit()}
+
+
+def _dt(s: str | None) -> datetime | None:
+    try:
+        return datetime.fromisoformat(s.replace("Z", "+00:00")) if s else None
+    except ValueError:
+        return None
+
+
+def _drop_excluded(items: dict[str, RawItem], cfg: dict) -> None:
+    excl = [x.lower() for x in cfg.get("exclude_channels") or []]
+    for vid in [v for v, it in items.items() if any(x in (it.author or "").lower() for x in excl)]:
+        del items[vid]
+
+
+def _collect_comments(api, items: dict[str, RawItem], cfg: dict, state: dict, sid: str,
+                      errors: list[str]) -> list[RawItem]:
+    """Mỗi video: 100 bình luận mới nhất (1 đơn vị). Bỏ qua video số bình luận không đổi so với lần trước.
+    Ưu tiên video nhiều bình luận; tối đa comments_max_videos video mỗi lần chạy."""
+    per_video = int(cfg.get("comments_per_video", 100))
+    if per_video <= 0:
+        return []
+    seen_counts = state.setdefault("comment_counts", {})
+    cand = [(it.metrics or {}).get("comments", 0) for it in items.values()]
+    todo = sorted((it for it, n in zip(items.values(), cand) if n and n != seen_counts.get(it.content_id)),
+                  key=lambda it: -(it.metrics or {}).get("comments", 0))[: int(cfg.get("comments_max_videos", 30))]
+    out = []
+    for it in todo:
+        try:
+            for c in api.comments(it.content_id, min(per_video, 100)):
+                ci = _comment_item(c, it, sid)
+                if ci:
+                    out.append(ci)
+            seen_counts[it.content_id] = it.metrics["comments"]
+        except ApiError as e:
+            errors.append(f"commentThreads {it.content_id}: {e}")
+    live = set(state.get("tracked", {})) | set(items)
+    for vid in [v for v in seen_counts if v not in live]:
+        del seen_counts[vid]
+    return out
 
 
 def collect(cfg: dict, api_factory=YouTubeAPI) -> list[RawItem]:
@@ -155,7 +226,13 @@ def collect(cfg: dict, api_factory=YouTubeAPI) -> list[RawItem]:
                 last[q["q"]] = now.replace(microsecond=0).isoformat()
             except ApiError as e:
                 errors.append(f"search {q['q']!r}: {e}")
-        ids = list(dict.fromkeys(found + list(items)))
+        # Video tìm được trong lookback_hours được theo dõi tiếp giữa các lần search (cập nhật lượt xem, bình luận)
+        tracked = state.setdefault("tracked", {})
+        cutoff = now - timedelta(hours=float(cfg.get("lookback_hours", 48)))
+        for vid in list(tracked):
+            if datetime.fromisoformat(tracked[vid]) < cutoff:
+                del tracked[vid]
+        ids = list(dict.fromkeys(found + list(items) + list(tracked)))
         if ids:
             try:
                 for vid, v in api.videos(ids).items():
@@ -165,13 +242,19 @@ def collect(cfg: dict, api_factory=YouTubeAPI) -> list[RawItem]:
                                        _metrics(v.get("statistics", {})))
             except ApiError as e:
                 errors.append(f"videos.list: {e}")
+        _drop_excluded(items, cfg)
+        for vid, it in items.items():
+            dt = _dt(it.published_at)
+            if dt and dt >= cutoff:
+                tracked.setdefault(vid, dt.replace(microsecond=0).isoformat())
+        comment_items = _collect_comments(api, items, cfg, state, sid, errors)
         state["units_last_run"] = api.units
         _save_state(state)
 
     if not cfg.get("channels") and not queries:
         raise SourceError("YouTube: chưa cấu hình channels hoặc queries")
-    excl = [x.lower() for x in cfg.get("exclude_channels") or []]
-    out = [it for it in items.values() if not any(x in (it.author or "").lower() for x in excl)]
+    _drop_excluded(items, cfg)
+    out = list(items.values()) + (comment_items if api else [])
     if errors and not out:
         raise SourceError("; ".join(errors))
     if errors:

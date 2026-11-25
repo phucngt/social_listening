@@ -36,11 +36,19 @@ class FakeAPI:
         self.units += 100
         return ["v1"]
 
+    comments_calls = []
+
     def videos(self, ids):
         self.units += 1
         return {"v1": {"snippet": {"title": "Yuanta", "description": "d", "channelTitle": "C",
-                                   "publishedAt": "2026-11-24T00:00:00Z"},
-                       "statistics": {"viewCount": "123", "likeCount": "4"}}}
+                                   "publishedAt": ago(1)},
+                       "statistics": {"viewCount": "123", "likeCount": "4", "commentCount": "2"}}}
+
+    def comments(self, vid, n):
+        self.units += 1
+        FakeAPI.comments_calls.append((vid, n))
+        return [{"id": "c1", "textOriginal": "App YSflex lỗi", "authorDisplayName": "A",
+                 "publishedAt": ago(1), "likeCount": 3}, {"id": "c2", "textOriginal": ""}]
 
 
 def test_youtube_api_search_throttled_and_no_key(tmp_path, monkeypatch):
@@ -53,10 +61,20 @@ def test_youtube_api_search_throttled_and_no_key(tmp_path, monkeypatch):
     monkeypatch.setenv("YOUTUBE_API_KEY", "SECRET")
     apis = []
     factory = lambda k: apis.append(FakeAPI(k)) or apis[-1]  # noqa: E731
+    FakeAPI.comments_calls = []
     items = youtube.collect(cfg, factory)
-    assert items[0].metrics == {"views": 123, "likes": 4}
-    assert youtube.collect(cfg, factory) == []  # lần 2 trong 3 giờ: không gọi search
+    assert items[0].metrics == {"views": 123, "likes": 4, "comments": 2}
+    c = items[1]
+    assert (c.source, c.key, c.content, c.metrics) == ("youtube_comment", "youtube_comment:id:comment:c1",
+                                                       "App YSflex lỗi", {"likes": 3})
+    assert c.original_url.endswith("watch?v=v1&lc=c1") and "bình luận video: Yuanta" in c.group_name
+    assert len(items) == 2  # bình luận rỗng bị bỏ
+    # Lần 2 trong 3 giờ: không search; video vẫn được theo dõi (tracked) và cập nhật số liệu,
+    # nhưng số bình luận không đổi -> không gọi commentThreads lại
+    again = youtube.collect(cfg, factory)
+    assert [i.content_id for i in again] == ["v1"]
     assert [a.searches for a in apis] == [["Yuanta"], []]
+    assert FakeAPI.comments_calls == [("v1", 100)]
 
 
 def test_api_error_hides_key(monkeypatch):
@@ -136,3 +154,14 @@ def test_title_only_groups_and_exclude_channels(env, monkeypatch, tmp_path):  # 
     monkeypatch.setattr(youtube, "_get", lambda url, timeout=30: (FIX / "yt_channel.xml").read_bytes())
     got = youtube.collect({"id": "yt", "channels": ["UC1"], "exclude_channels": ["chứng khoán a"]})
     assert got == []
+
+
+def test_comments_through_pipeline(env, monkeypatch):  # noqa: F811
+    items = [RawItem("youtube_comment", "YouTube — A — bình luận video: X", "dòng 1\nbên VPS rút tiền chậm",
+                     "comment:1", ago(1), metrics={"likes": 1}),
+             RawItem("youtube_comment", "YouTube — A — bình luận video: X", "hay quá", "comment:2", ago(1))]
+    monkeypatch.setitem(pipeline.COLLECTORS, "fake", lambda cfg: list(items))
+    (env / "src.yaml").write_text("sources:\n  - {id: y, type: fake, enabled: true, title_only_groups: [competitor],"
+                                  " hot: {min_views: 1, watch_hours: 24}}\n", encoding="utf-8")
+    s = pipeline.collect(env / "src.yaml", env / "kw.yaml")["stats"]
+    assert (s["relevant_new_layer2"], s["watching"], s["new"]) == (1, 0, 2)

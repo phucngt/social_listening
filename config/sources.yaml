@@ -34,6 +34,8 @@ sources:
       - Yuanta Securities Thailand
       - Yuantakorea
       - 유안타
+    comments_per_video: 100     # 100 bình luận mới nhất / video = 1 đơn vị hạn mức; 0 = tắt
+    comments_max_videos: 30     # tối đa số video lấy bình luận mỗi lần (ưu tiên video nhiều bình luận)
     title_only_groups: [competitor]   # tên đối thủ chỉ tính khi nằm trong tiêu đề (mô tả hay có link mở TK VPS...)
     queries:
       - {q: "Yuanta Việt Nam", order: date}   # lớp 2: nhắc tới YSVN

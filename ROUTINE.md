@@ -23,6 +23,8 @@ YSVN; **lớp 2** = nhắc YSVN/đối thủ (config/keywords.yaml). Mỗi dòng
     "issue_type": "Khiếu nại|Phản ánh|Tin tức|Thảo luận|Khác", "summary": "tóm tắt 1 câu",
     "reason": "bắt buộc nếu High/Critical", "department": "bắt buộc nếu High/Critical"}
    ```
+   Dòng `source: youtube_comment` là bình luận dưới video (tên video nằm trong `group_name`): phân loại theo
+   nội dung bình luận; khiếu nại cụ thể của khách YSVN trong bình luận vẫn là High.
    Dòng `layer: 1` (tin hot thị trường, không nhắc YSVN): thường topic "Thị trường", priority Low/Medium —
    chỉ nâng lên High nếu nội dung có rủi ro rõ ràng cho công ty chứng khoán nói chung.
    Gợi ý mức độ: Critical = cáo buộc lừa đảo/mất tiền/sự cố hệ thống lan rộng/tin pháp lý nghiêm trọng về YSVN;
