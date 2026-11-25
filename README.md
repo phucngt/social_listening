@@ -6,12 +6,23 @@ Theo dõi thông tin về Chứng khoán Yuanta Việt Nam trên các nguồn đ
 ## Luồng xử lý
 
 ```
-collectors (google_news, manual, facebook*, zalo*)
-   → lọc trùng (data/seen.jsonl)  → lọc tuổi bài (max_age_days)  → lọc từ khóa (config/keywords.yaml)
+collectors (google_news, manual, youtube, facebook, zalo*)   ← GitHub Actions mỗi giờ (có secret)
+   → lọc trùng (data/seen.jsonl)  → lọc tuổi bài (max_age_days)
+   → lọc 2 lớp: lớp 1 tin hot (lượt xem/bình luận, `hot:`) | lớp 2 YSVN/đối thủ (config/keywords.yaml)
    → data/pending.jsonl  → AI phân loại (Claude)  → python -m sl ingest
    → data/items.jsonl + data/alerts.jsonl  → python -m sl report → runs/<run_id>.md
 ```
-\* chưa triển khai, đang tắt — chờ danh sách nhóm và tài khoản công ty được duyệt.
+\* chưa triển khai. `youtube` và `facebook` đã có code nhưng đang tắt trong config cho tới khi có secret.
+
+## Secret (GitHub → Settings → Secrets and variables → Actions)
+
+| Secret | Dùng cho | Cách tạo |
+|---|---|---|
+| `YOUTUBE_API_KEY` | Collector YouTube (tìm theo từ khóa, lượt xem) | Google Cloud Console → bật YouTube Data API v3 → tạo API key |
+| `FB_STORAGE_STATE` | Collector Facebook (phiên đăng nhập, không dùng mật khẩu) | Chạy `python scripts/export_fb_session.py` trên máy cá nhân |
+
+Phiên Claude không đọc được secret; chỉ workflow `.github/workflows/collect.yml` đọc được.
+Workflow chạy theo lịch chỉ khi file nằm trên branch mặc định của repo.
 
 ## File dữ liệu
 

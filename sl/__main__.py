@@ -1,5 +1,6 @@
 """CLI:
   python -m sl collect                      # thu thập + lọc trùng + lọc từ khóa → data/pending.jsonl
+  python -m sl prepare                      # (routine) dùng run mới nhất của GitHub Actions, nếu không có thì tự collect
   python -m sl ingest <run_id> <file.jsonl> # nhận kết quả phân tích AI → data/items.jsonl, data/alerts.jsonl
   python -m sl report <run_id>              # in Audit Log (markdown) và lưu runs/<run_id>.md
 """
@@ -19,6 +20,11 @@ def main(argv: list[str]) -> int:
         run = pipeline.collect()
         print(json.dumps({"run_id": run["run_id"], "stats": run["stats"], "errors": run["errors"]},
                          ensure_ascii=False, indent=2))
+        return 0
+    if cmd == "prepare":
+        res = pipeline.prepare()
+        run = pipeline.load_run(res["run_id"])
+        print(json.dumps({**res, "stats": run["stats"], "errors": run["errors"]}, ensure_ascii=False, indent=2))
         return 0
     if cmd == "ingest" and len(argv) == 3:
         run = pipeline.ingest(argv[1], Path(argv[2]))

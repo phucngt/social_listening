@@ -21,12 +21,36 @@ sources:
     path: inbox
 
   # Chưa bật — chờ DM cung cấp danh sách nhóm và tài khoản công ty được duyệt.
-  - id: fb_group_example
+  # YouTube: RSS theo kênh (không cần key) + YouTube Data API (tìm theo từ khóa, lấy lượt xem).
+  # API key lấy từ GitHub Secret YOUTUBE_API_KEY — chỉ có khi chạy trong GitHub Actions.
+  # Bật (enabled: true) sau khi đã tạo secret.
+  - id: youtube
+    type: youtube
+    enabled: false
+    api_key_env: YOUTUBE_API_KEY
+    channels: []            # channel_id các kênh chứng khoán theo dõi cố định (dạng UCxxxx), đọc qua RSS
+    lookback_hours: 48      # chỉ tìm video đăng trong khoảng này
+    search_every_hours: 3   # mỗi query gọi search tối đa 1 lần / 3 giờ (100 đơn vị hạn mức mỗi lần)
+    queries:
+      - {q: "Yuanta", order: date}            # lớp 2: nhắc tới YSVN
+      - {q: "chứng khoán", order: viewCount}  # lớp 1: video thị trường xem nhiều nhất
+      - {q: "VN-Index", order: viewCount}
+    hot:                    # lớp 1 — "tin hot" dù không nhắc YSVN
+      min_views: 50000
+      min_views_per_hour: 2000
+      watch_hours: 24       # video < 24h chưa hot: lần sau đánh giá lại lượt xem
+
+  # Facebook group: phiên đăng nhập (storage_state JSON) lấy từ GitHub Secret FB_STORAGE_STATE.
+  # Xuất phiên trên máy cá nhân: python scripts/export_fb_session.py
+  - id: fb_gieo_mam_tich_san
     type: facebook
     enabled: false
-    group_name: "TODO: tên nhóm"
+    group_name: "Gieo mầm tích sản"
     url: "TODO: https://www.facebook.com/groups/<id>"
-    storage_state_env: FB_STORAGE_STATE   # đường dẫn file phiên đăng nhập, đặt qua biến môi trường
+    storage_state_env: FB_STORAGE_STATE
+    max_scrolls: 5
+    hot:
+      min_comments: 30
 
   - id: zalo_group_example
     type: zalo

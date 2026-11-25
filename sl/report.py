@@ -12,6 +12,11 @@ def status_of(run: dict) -> str:
     return "SUCCESS"
 
 
+RUNNERS = {"github_actions": "GitHub Actions (có secret YouTube/Facebook)",
+           "local": "Routine Claude — thu thập dự phòng tại chỗ (không có secret)"}
+LAYER = {1: "[Lớp 1 – tin hot] ", 2: ""}
+
+
 def _cell(x) -> str:
     return str(x or "—").replace("|", "\\|").replace("\n", " ")
 
@@ -29,12 +34,16 @@ def render(run_id: str) -> str:
         f"- Thời gian bắt đầu: {run['started_at']}",
         f"- Thời gian kết thúc: {run.get('finished_at') or run.get('finished_collect_at')}",
         f"- Trạng thái: **{st}**",
+        f"- Thu thập bởi: {RUNNERS.get(run.get('runner'), run.get('runner') or 'local')}",
         f"- Số nguồn được cấu hình: {s.get('sources_configured', 0)}",
         f"- Số nguồn truy cập thành công: {s.get('sources_ok', 0)}"
         + (f" (+{s['sources_partial']} một phần)" if s.get("sources_partial") else ""),
         f"- Số nguồn thất bại: {s.get('sources_failed', 0)}",
         f"- Số nội dung thu thập: {s.get('collected', 0)}",
-        f"- Số nội dung mới: {s.get('new', 0)} (liên quan, chuyển AI: {s.get('relevant_new', 0)})",
+        f"- Số nội dung mới: {s.get('new', 0)} (chuyển AI: {s.get('relevant_new', 0)}"
+        + (f" — lớp 2 YSVN/đối thủ: {s.get('relevant_new_layer2', 0)}, lớp 1 tin hot: {s.get('hot_new_layer1', 0)}"
+           if "hot_new_layer1" in s else "") + ")"
+        + (f"; {s['watching']} video/bài còn mới đang theo dõi số liệu, chưa tính là đã thấy" if s.get("watching") else ""),
         f"- Số nội dung trùng lặp: {s.get('duplicate', 0)}"
         + (f" (ngoài ra {s['too_old']} nội dung cũ hơn max_age_days, chỉ đánh dấu đã thấy)" if s.get("too_old") else ""),
         f"- Số nội dung được AI phân tích: {s.get('analyzed', 0)}",
@@ -55,7 +64,7 @@ def render(run_id: str) -> str:
     order = {"Critical": 0, "High": 1, "Medium": 2, "Low": 3}
     for r in sorted(items, key=lambda r: order.get(r["priority"], 9)):
         L.append(f"| {_cell(r.get('published_at'))} | {_cell(r['source'])} / {_cell(r['group_name'])} | "
-                 f"{_cell(r.get('summary') or r['content'][:160])} | {_cell(r['sentiment'])} | "
+                 f"{LAYER.get(r.get('layer', 2), '')}{_cell(r.get('summary') or r['content'][:160])} | {_cell(r['sentiment'])} | "
                  f"{_cell(r['priority'])} | {_cell(r.get('original_url'))} |")
     if not items:
         L.append("| — | — | Không có bản ghi được phân tích trong lần chạy này | — | — | — |")

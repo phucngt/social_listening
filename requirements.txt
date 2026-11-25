@@ -1,5 +1,5 @@
 PyYAML>=6.0
-# Chỉ cần khi bật collector Facebook/Zalo:
+# Chỉ cần khi bật collector Facebook/Zalo (GitHub Actions tự cài khi có secret FB_STORAGE_STATE):
 # playwright>=1.40
 # Chạy test:
 # pytest>=7

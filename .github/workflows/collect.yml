@@ -1,0 +1,65 @@
+# Thu thập dữ liệu có dùng secret (YouTube API key, phiên Facebook) — chạy mỗi giờ.
+# Routine Claude (ROUTINE.md) chạy sau đó, dùng run này để phân tích AI + xuất Audit Log.
+# Secret cần tạo: Settings → Secrets and variables → Actions
+#   YOUTUBE_API_KEY  — API key YouTube Data API v3
+#   FB_STORAGE_STATE — nội dung file storage_state.json (scripts/export_fb_session.py)
+name: collect
+
+on:
+  schedule:
+    - cron: "20 * * * *"   # phút 20 mỗi giờ (UTC); routine Claude chạy khoảng phút 40
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: collect
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Cài đặt
+        run: |
+          pip install -r requirements.txt
+          if [ -n "$FB_STORAGE_STATE" ]; then
+            pip install playwright && python -m playwright install --with-deps chromium
+          fi
+        env:
+          FB_STORAGE_STATE: ${{ secrets.FB_STORAGE_STATE }}
+
+      - name: Đồng bộ lịch sử lọc trùng
+        run: |
+          git config user.name "social-listening-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          bash scripts/sync_state.sh
+
+      - name: Thu thập
+        env:
+          SL_RUNNER: github_actions
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          FB_STORAGE_STATE: ${{ secrets.FB_STORAGE_STATE }}
+        run: python -m sl collect
+
+      - name: Commit và push data/, runs/
+        run: |
+          git add data runs
+          if git diff --cached --quiet; then echo "Không có thay đổi"; exit 0; fi
+          git commit -q -m "collect (GitHub Actions): $(ls -t runs/*.json | head -1 | xargs basename)"
+          for i in 1 2 3 4; do
+            git push origin "HEAD:${GITHUB_REF_NAME}" && exit 0
+            git fetch -q origin "${GITHUB_REF_NAME}" && git merge --no-edit -q FETCH_HEAD
+            sleep $((i * 5))
+          done
+          echo "Push thất bại" >&2; exit 1

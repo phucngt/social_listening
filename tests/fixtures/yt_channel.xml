@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns:yt="http://www.youtube.com/xml/schemas/2015" xmlns:media="http://search.yahoo.com/mrss/" xmlns="http://www.w3.org/2005/Atom">
+ <title>Kênh Chứng Khoán A</title>
+ <entry>
+  <id>yt:video:vid1</id><yt:videoId>vid1</yt:videoId>
+  <title>Nhận định VN-Index tuần tới</title>
+  <published>2026-11-23T20:00:28+00:00</published>
+  <media:group><media:description>Phân tích thị trường</media:description>
+   <media:community><media:statistics views="24403"/></media:community></media:group>
+ </entry>
+ <entry>
+  <id>yt:video:vid2</id><yt:videoId>vid2</yt:videoId>
+  <title>Review app YSflex của Yuanta</title>
+  <published>2026-11-22T10:00:00+00:00</published>
+  <media:group><media:description></media:description></media:group>
+ </entry>
+</feed>

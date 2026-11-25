@@ -6,7 +6,7 @@ from .util import content_key, now_iso
 @dataclass
 class RawItem:
     """Nội dung thô do collector thu được (chưa phân tích)."""
-    source: str            # google_news | manual | facebook | zalo ...
+    source: str            # google_news | manual | facebook | youtube | zalo ...
     group_name: str
     content: str
     content_id: str | None = None
@@ -14,6 +14,7 @@ class RawItem:
     original_url: str | None = None
     author: str | None = None
     source_id: str = ""    # id nguồn trong config/sources.yaml
+    metrics: dict | None = None  # số liệu tương tác: views/likes/comments (dùng cho lớp lọc "tin hot")
     detected_at: str = field(default_factory=now_iso)
 
     @property

@@ -2,11 +2,19 @@
 
 Python lo thu thập, lọc trùng và lọc từ khóa; Claude **chỉ** phân tích các dòng trong `data/pending.jsonl`.
 
+Thu thập chính chạy trong **GitHub Actions** (`.github/workflows/collect.yml`, phút 20 mỗi giờ) vì chỉ ở đó mới có
+secret `YOUTUBE_API_KEY` và `FB_STORAGE_STATE`. Routine Claude dùng lại run đó; nếu không có run nào đủ mới thì tự
+thu thập dự phòng (không có secret → nguồn YouTube/Facebook báo lỗi, trạng thái PARTIAL là đúng sự thật).
+
+Lọc 2 lớp: **lớp 1** = tin hot theo tương tác (lượt xem/bình luận, cấu hình `hot:` của từng nguồn), dù không nhắc
+YSVN; **lớp 2** = nhắc YSVN/đối thủ (config/keywords.yaml). Mỗi dòng pending có `layer` (1 hoặc 2) và `hot_reason`.
+
 0. `bash scripts/sync_state.sh` — **bắt buộc**, lấy `data/` và `runs/` từ branch `claude/*` có commit mới nhất
    (mỗi lần chạy có thể được cấp branch khác nhau). Lỗi bước này → báo FAILED, không chạy tiếp.
 1. `pip install -r requirements.txt`
-2. `python -m sl collect` → ghi lại `run_id` in ra.
+2. `python -m sl prepare` → ghi lại `run_id` và `mode` in ra (`github_actions` hoặc `local_fallback`).
    - Mỗi nguồn lỗi được ghi vào `runs/<run_id>.json`, không làm dừng cả lần chạy.
+   - Nếu có `older_unreported` (run của Actions chưa có Audit Log): chạy `python -m sl report <id>` cho từng run đó.
 3. Nếu `data/pending.jsonl` có dòng: đọc từng dòng, phân loại **chỉ dựa trên nội dung có trong dòng**
    (không suy diễn), rồi ghi `data/analysis_<run_id>.jsonl`, mỗi dòng:
    ```json
@@ -15,6 +23,8 @@ Python lo thu thập, lọc trùng và lọc từ khóa; Claude **chỉ** phân 
     "issue_type": "Khiếu nại|Phản ánh|Tin tức|Thảo luận|Khác", "summary": "tóm tắt 1 câu",
     "reason": "bắt buộc nếu High/Critical", "department": "bắt buộc nếu High/Critical"}
    ```
+   Dòng `layer: 1` (tin hot thị trường, không nhắc YSVN): thường topic "Thị trường", priority Low/Medium —
+   chỉ nâng lên High nếu nội dung có rủi ro rõ ràng cho công ty chứng khoán nói chung.
    Gợi ý mức độ: Critical = cáo buộc lừa đảo/mất tiền/sự cố hệ thống lan rộng/tin pháp lý nghiêm trọng về YSVN;
    High = khiếu nại cụ thể của khách YSVN, tin tiêu cực trên báo lớn; Medium = phản ánh nhỏ, thảo luận tiêu cực
    chung; Low = tin tức/thảo luận trung lập hoặc tích cực.
