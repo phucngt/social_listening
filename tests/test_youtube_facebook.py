@@ -121,3 +121,18 @@ def test_facebook_to_items_and_session_errors(monkeypatch):
     with pytest.raises(SourceError, match="không hợp lệ") as e:
         facebook.collect(cfg)
     assert "không phải json" not in str(e.value)
+
+
+def test_title_only_groups_and_exclude_channels(env, monkeypatch, tmp_path):  # noqa: F811
+    items = [RawItem("youtube", "YouTube — A", "VN-Index hôm nay\nMở tài khoản VPS tại link", "x", ago(30)),
+             RawItem("youtube", "YouTube — A", "VPS tăng phí\nmô tả", "y", ago(30))]
+    monkeypatch.setitem(pipeline.COLLECTORS, "fake", lambda cfg: list(items))
+    (env / "src.yaml").write_text(
+        "sources:\n  - {id: y, type: fake, enabled: true, title_only_groups: [competitor]}\n", encoding="utf-8")
+    pipeline.collect(env / "src.yaml", env / "kw.yaml")
+    assert [p["content_id"] for p in read_jsonl(pipeline.PENDING)] == ["y"]
+
+    monkeypatch.setattr(youtube, "STATE", tmp_path / "st.json")
+    monkeypatch.setattr(youtube, "_get", lambda url, timeout=30: (FIX / "yt_channel.xml").read_bytes())
+    got = youtube.collect({"id": "yt", "channels": ["UC1"], "exclude_channels": ["chứng khoán a"]})
+    assert got == []

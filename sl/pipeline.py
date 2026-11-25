@@ -153,6 +153,10 @@ def collect(sources_path: Path = ROOT / "config/sources.yaml",
                 continue
             old = _too_old(it.published_at, src.get("max_age_days", default_age))
             hits = {} if old else kw.match(it.content)
+            # Nhóm từ khóa chỉ xét trong dòng đầu (tiêu đề) — vd. "vps" trong link mở tài khoản ở mô tả video
+            if hits and src.get("title_only_groups"):
+                title_hits = kw.match(it.content.split("\n", 1)[0])
+                hits = {g: w for g, w in hits.items() if g not in src["title_only_groups"] or g in title_hits}
             # Lớp 2 (lọc tinh): nhắc YSVN/đối thủ. Lớp 1 (lọc thô): tin hot theo tương tác.
             hot = None if old else is_hot(it.metrics, it.published_at, hot_cfg)
             layer = 2 if kw.is_relevant(hits) else 1 if hot else 0

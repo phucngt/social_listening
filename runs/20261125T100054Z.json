@@ -58,7 +58,12 @@
     "relevant_new": 26,
     "relevant_new_layer2": 24,
     "hot_new_layer1": 2,
-    "pending_total": 26
+    "pending_total": 0,
+    "analyzed": 26,
+    "alerts_created": 0,
+    "alerts_delivered": 0,
+    "invalid_analysis": 0
   },
-  "finished_collect_at": "2026-11-25T10:00:57+00:00"
+  "finished_collect_at": "2026-11-25T10:00:57+00:00",
+  "finished_at": "2026-11-25T10:01:49+00:00"
 }

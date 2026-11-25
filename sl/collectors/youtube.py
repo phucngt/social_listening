@@ -170,7 +170,8 @@ def collect(cfg: dict, api_factory=YouTubeAPI) -> list[RawItem]:
 
     if not cfg.get("channels") and not queries:
         raise SourceError("YouTube: chưa cấu hình channels hoặc queries")
-    out = list(items.values())
+    excl = [x.lower() for x in cfg.get("exclude_channels") or []]
+    out = [it for it in items.values() if not any(x in (it.author or "").lower() for x in excl)]
     if errors and not out:
         raise SourceError("; ".join(errors))
     if errors:

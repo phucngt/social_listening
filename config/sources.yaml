@@ -30,8 +30,15 @@ sources:
     channels: []            # channel_id các kênh chứng khoán theo dõi cố định (dạng UCxxxx), đọc qua RSS
     lookback_hours: 48      # chỉ tìm video đăng trong khoảng này
     search_every_hours: 3   # mỗi query gọi search tối đa 1 lần / 3 giờ (100 đơn vị hạn mức mỗi lần)
+    exclude_channels:       # kênh của Yuanta nước ngoài (cùng tập đoàn, không phải YSVN)
+      - Yuanta Securities Thailand
+      - Yuantakorea
+      - 유안타
+    title_only_groups: [competitor]   # tên đối thủ chỉ tính khi nằm trong tiêu đề (mô tả hay có link mở TK VPS...)
     queries:
-      - {q: "Yuanta", order: date}            # lớp 2: nhắc tới YSVN
+      - {q: "Yuanta Việt Nam", order: date}   # lớp 2: nhắc tới YSVN
+      - {q: "YSVN", order: date}
+      - {q: "YSflex", order: date}
       - {q: "chứng khoán", order: viewCount}  # lớp 1: video thị trường xem nhiều nhất
       - {q: "VN-Index", order: viewCount}
     hot:                    # lớp 1 — "tin hot" dù không nhắc YSVN
