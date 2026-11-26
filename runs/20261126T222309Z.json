@@ -1,0 +1,64 @@
+{
+  "run_id": "20261126T222309Z",
+  "started_at": "2026-11-26T22:23:09+00:00",
+  "runner": "github_actions",
+  "sources": [
+    {
+      "id": "google_news_ysvn",
+      "type": "google_news",
+      "enabled": true,
+      "status": "ok",
+      "collected": 145,
+      "new": 1
+    },
+    {
+      "id": "manual_inbox",
+      "type": "manual",
+      "enabled": true,
+      "status": "ok",
+      "collected": 0,
+      "new": 0
+    },
+    {
+      "id": "youtube",
+      "type": "youtube",
+      "enabled": true,
+      "status": "ok",
+      "collected": 784,
+      "new": 321
+    },
+    {
+      "id": "fb_gieo_mam_tich_san",
+      "type": "facebook",
+      "enabled": false,
+      "status": "skipped",
+      "collected": 0,
+      "new": 0
+    },
+    {
+      "id": "zalo_group_example",
+      "type": "zalo",
+      "enabled": false,
+      "status": "skipped",
+      "collected": 0,
+      "new": 0
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "sources_configured": 3,
+    "sources_ok": 3,
+    "sources_partial": 0,
+    "sources_failed": 0,
+    "collected": 929,
+    "new": 322,
+    "duplicate": 583,
+    "too_old": 1,
+    "watching": 24,
+    "relevant_new": 3,
+    "relevant_new_layer2": 1,
+    "hot_new_layer1": 2,
+    "pending_total": 23
+  },
+  "finished_collect_at": "2026-11-26T22:23:18+00:00"
+}
